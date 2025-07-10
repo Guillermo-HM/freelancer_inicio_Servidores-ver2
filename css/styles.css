@@ -379,6 +379,7 @@ h1,h2,h3
     font-family: 'Krub', sans-serif;
     background-color: var(--secundario);
     color: var(--blanco);
+    margin-bottom:auto;
     
 }
 

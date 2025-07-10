@@ -32,3 +32,9 @@ input[type=text], input[type=password], input[type=email], input[type=number], s
     border-radius: 4px;
     box-sizing: border-box; /* Asegura que el padding no afecte al ancho total */
 }
+
+#data-list div { 
+    padding: 10px; 
+    border-bottom: 1px solid #ddd; 
+    display: flex; 
+    justify-content: space-between; }
