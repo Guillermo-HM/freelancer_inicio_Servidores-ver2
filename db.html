@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Firebase Funcional</title>
+    <!-- Firebase SDK v9 (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #form { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        #data-list div { padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; }
+        button { cursor: pointer; padding: 5px 10px; margin-left: 5px; }
+        input { padding: 8px; margin: 5px 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>CRUD con Firebase</h1>
+    
+    <!-- Formulario -->
+    <form id="form">
+        <input type="hidden" id="item-id">
+        <input type="text" id="name" placeholder="Nombre" required>
+        <button type="submit">Guardar</button>
+    </form>
+
+    <!-- Lista de datos -->
+    <div id="data-list"></div>
+
+    <script>
+        // 1. Configuración Firebase (REMPLAZA CON TUS DATOS)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6qHBgfFGd8SFraGHsSpNt4hYMhahfs9Y",
+            authDomain: "tasks-2fb29.firebaseapp.com",
+            projectId: "tasks-2fb29",
+            storageBucket: "tasks-2fb29.firebasestorage.app",
+            messagingSenderId: "399630148658",
+            appId: "1:399630148658:web:6735792bd953b157abc82b"
+        };
+
+        // 2. Inicialización
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // 3. Autenticación automática (Modo desarrollo)
+        auth.signInAnonymously()
+            .then(() => {
+                console.log("Autenticado con ID:", auth.currentUser.uid);
+                loadData(); // Cargar datos después de autenticar
+            })
+            .catch(error => {
+                console.error("Error auth:", error);
+                document.getElementById('data-list').innerHTML = 
+                    '<p>Error de autenticación. Recarga la página.</p>';
+            });
+
+        // 4. Referencia a la colección
+        const tasksRef = db.collection("tasks");
+
+        // 5. CRUD Functions
+        async function loadData() {
+            try {
+                const snapshot = await tasksRef
+                    .where("userId", "==", auth.currentUser.uid)
+                    .get();
+                
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push({ id: doc.id, ...doc.data() });
+                });
+                
+                renderData(tasks);
+            } catch (error) {
+                console.error("Error cargando datos:", error);
+                document.getElementById('data-list').innerHTML = 
+                    '<p>Error al cargar. Verifica la consola.</p>';
+            }
+        }
+
+        function renderData(tasks) {
+            const container = document.getElementById('data-list');
+            container.innerHTML = tasks.map(task => `
+                <div>
+                    <span>${task.name}</span>
+                    <div>
+                        <button onclick="editItem('${task.id}')">Editar</button>
+                        <button onclick="deleteItem('${task.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 6. Event Listeners
+        document.getElementById('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('item-id').value;
+            const name = document.getElementById('name').value;
+
+            try {
+                if (id) {
+                    await tasksRef.doc(id).update({ name });
+                } else {
+                    await tasksRef.add({
+                        name,
+                        userId: auth.currentUser.uid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                loadData();
+                e.target.reset();
+            } catch (error) {
+                console.error("Error guardando:", error);
+                alert("Error al guardar. Verifica la consola.");
+            }
+        });
+
+        // 7. Funciones globales
+        window.editItem = async (id) => {
+            const doc = await tasksRef.doc(id).get();
+            if (doc.exists) {
+                document.getElementById('item-id').value = id;
+                document.getElementById('name').value = doc.data().name;
+            }
+        };
+
+        window.deleteItem = async (id) => {
+            if (confirm("¿Eliminar este registro?")) {
+                await tasksRef.doc(id).delete();
+                loadData();
+            }
+        };
+    </script>
+</body>
+</html>
