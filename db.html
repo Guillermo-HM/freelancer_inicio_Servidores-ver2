@@ -3,22 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Firebase Funcional</title>
+    <title>CRUD Firebase</title>
+
+    
     <!-- Firebase SDK v9 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0 auto;  }
-        #form { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 500px; }
+<style>
+        /* Estilos generales */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --danger-color: #f72585;
+            --success-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
         
-        button { cursor: pointer; padding: 5px 10px; margin-left: 5px; }
-        input { padding: 8px; margin: 5px 0; width: 100%; width: calc(80% - 16px); }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f7fa;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Formulario */
+        #form {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+        
+        #form.editing {
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-color);
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+        }
+        
+        button {
+            cursor: pointer;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button i {
+            margin-right: 8px;
+        }
+        
+        button[type="submit"] {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        button[type="submit"].editing-mode {
+            background-color: var(--accent-color);
+        }
+        
+        /* Lista de datos */
+        #data-list {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        
+        .data-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+        
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        
+        .data-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .data-item .item-content {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+        
+        .data-item .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-edit {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+        }
+        
+        .btn-edit:hover {
+            background-color: #3a7bd5;
+            transform: translateY(-2px);
+        }
+        
+        .btn-delete {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 8px 16px;
+        }
+        
+        .btn-delete:hover {
+            background-color: #e5176f;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            color: var(--gray-color);
+        }
+        
+        .footer h4 {
+            color: var(--gray-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer div {
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer strong {
+            color: var(--dark-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .data-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .data-item .item-actions {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            input, button {
+                width: 100%;
+            }
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        #data-list {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Estado de carga */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
-
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/styledb.css">
 
 </head>
 <body>
@@ -27,7 +259,9 @@
     <!-- Formulario -->
     <form id="form">
         <input type="hidden" id="item-id">
-        <input type="text" id="name" placeholder="Nombre" required>
+        <div class="form-group">
+            <input type="text" id="name" placeholder="Nombre de la tarea" required>
+        </div>
         <button type="submit">Guardar</button>
     </form>
 
@@ -35,12 +269,12 @@
     <div id="data-list"></div>
 
     <script>
-        // 1. Configuración Firebase (REMPLAZA CON TUS DATOS)
+        // 1. Configuración Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC6qHBgfFGd8SFraGHsSpNt4hYMhahfs9Y",
             authDomain: "tasks-2fb29.firebaseapp.com",
             projectId: "tasks-2fb29",
-            storageBucket: "tasks-2fb29.firebasestorage.app",
+            storageBucket: "tasks-2fb29.appspot.com",
             messagingSenderId: "399630148658",
             appId: "1:399630148658:web:6735792bd953b157abc82b"
         };
@@ -70,6 +304,7 @@
             try {
                 const snapshot = await tasksRef
                     .where("userId", "==", auth.currentUser.uid)
+                    .orderBy("createdAt", "desc") // Ordenar por fecha de creación
                     .get();
                 
                 const tasks = [];
@@ -103,46 +338,83 @@
             e.preventDefault();
             
             const id = document.getElementById('item-id').value;
-            const name = document.getElementById('name').value;
+            const name = document.getElementById('name').value.trim();
+
+            if (!name) {
+                alert("Por favor ingresa un nombre");
+                return;
+            }
 
             try {
                 if (id) {
-                    await tasksRef.doc(id).update({ name });
+                    // Modo edición
+                    await tasksRef.doc(id).update({ 
+                        name,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+                    });
                 } else {
+                    // Modo creación
                     await tasksRef.add({
                         name,
                         userId: auth.currentUser.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
+                
+                // Resetear el formulario
+                resetForm();
                 loadData();
-                e.target.reset();
             } catch (error) {
                 console.error("Error guardando:", error);
                 alert("Error al guardar. Verifica la consola.");
             }
         });
 
+        // Función para resetear el formulario
+        function resetForm() {
+            document.getElementById('form').reset();
+            document.getElementById('item-id').value = '';
+            document.getElementById('form').classList.remove('editing');
+            document.querySelector('#form button[type="submit"]').textContent = "Guardar";
+            document.querySelector('#form button[type="submit"]').classList.remove('editing-mode');
+        }
+
         // 7. Funciones globales
         window.editItem = async (id) => {
             const doc = await tasksRef.doc(id).get();
             if (doc.exists) {
+                // Activar modo edición
+                document.getElementById('form').classList.add('editing');
                 document.getElementById('item-id').value = id;
                 document.getElementById('name').value = doc.data().name;
+                document.getElementById('name').focus();
+                
+                // Cambiar texto del botón
+                const submitBtn = document.querySelector('#form button[type="submit"]');
+                submitBtn.textContent = "Actualizar";
+                submitBtn.classList.add('editing-mode');
             }
         };
 
         window.deleteItem = async (id) => {
-            if (confirm("¿Eliminar este registro?")) {
-                await tasksRef.doc(id).delete();
-                loadData();
+            if (confirm("¿Estás seguro de eliminar este registro?")) {
+                try {
+                    await tasksRef.doc(id).delete();
+                    // Si estamos editando el elemento eliminado, reseteamos el form
+                    if (document.getElementById('item-id').value === id) {
+                        resetForm();
+                    }
+                    loadData();
+                } catch (error) {
+                    console.error("Error eliminando:", error);
+                    alert("Error al eliminar. Verifica la consola.");
+                }
             }
         };
     </script>
 
-
-   <footer class="footer">
-
+    <footer class="footer">
         <h4>Conceptualizacion de servicios en la nube</h4>
         <div><strong>Integrante 1</strong><p>Salas Pérez Juan Antonio</p> 
              <p><strong>Codigo</strong> 222308378</p>
@@ -153,6 +425,5 @@
              <p><strong>Correo</strong> guillermo.hernandez5581@alumnos.udg.mx</p>
         </div>
     </footer>
-
 </body>
 </html>
